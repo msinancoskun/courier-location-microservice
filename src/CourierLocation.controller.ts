@@ -8,26 +8,30 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiParam } from '@nestjs/swagger';
-import { CourierLocation } from './CourierLocation.schema';
-import { LocationService } from './CourierLocation.service';
+import { CourierLocation } from './courierLocation.schema';
+import { LocationService } from './courierLocation.service';
 
 @Controller('/courier')
 export class CourierLocationController {
-  constructor(private readonly service: LocationService) {}
+  constructor(private readonly service: LocationService) { }
 
   @Post('/save-courier-location')
   async saveLocation(@Res() res, @Body() location: CourierLocation) {
     try {
+
       const newLocation = await this.service.saveLocation(location);
 
       return res.status(HttpStatus.CREATED).json({
         message: 'Inserted new courier location.',
         data: newLocation,
       });
+
     } catch (err) {
+
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         message: `Could not insert courier data for ID: ${location.courierId}`,
       });
+
     }
   }
 

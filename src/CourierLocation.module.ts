@@ -1,12 +1,11 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { CourierLocationController } from './CourierLocation.controller';
+import { CourierLocationController } from './courierLocation.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { LocationService } from './CourierLocation.service';
-import {
-  CourierLocation,
-  CourierLocationSchema,
-} from './CourierLocation.schema';
+import { LocationService } from './courierLocation.service';
+import { CourierLocation, CourierLocationSchema } from './courierLocation.schema';
+import { LoggerMiddleware } from './Middlewares/logger.middleware';
+import { KafkaModule } from './kafka/kafka.module';
 
 @Module({
   imports: [
@@ -15,8 +14,17 @@ import {
     MongooseModule.forFeature([
       { name: CourierLocation.name, schema: CourierLocationSchema },
     ]),
+    KafkaModule,
   ],
   controllers: [CourierLocationController],
   providers: [LocationService],
 })
-export class CourierLocationModule {}
+
+export class CourierLocationModule {
+
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes("*");
+  }
+}

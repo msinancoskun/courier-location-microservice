@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { CourierLocationModule } from './CourierLocation.module';
+import { CourierLocationModule } from './courierLocation.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
@@ -17,6 +17,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('/', app, document);
 
-  await app.listen(process.env.PORT);
+  await app.listen(process.env.PORT || 3000, () => {
+    console.info(`Server ${process.env.NODE_ENV} listening on http://0.0.0.0:${process.env.PORT}`);
+  });
 }
+
 bootstrap();

@@ -20,5 +20,4 @@ export class CourierLocation {
 
 export type CourierLocationDocument = CourierLocation & Document;
 
-export const CourierLocationSchema =
-  SchemaFactory.createForClass(CourierLocation);
+export const CourierLocationSchema = SchemaFactory.createForClass(CourierLocation);
