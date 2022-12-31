@@ -1,37 +1,30 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpStatus,
-  Param,
-  Post,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Res } from '@nestjs/common';
 import { ApiParam } from '@nestjs/swagger';
-import { CourierLocation } from './courierLocation.schema';
-import { LocationService } from './courierLocation.service';
+import { CourierLocation } from './CourierLocation.schema';
+import { LocationService } from './CourierLocation.service';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER, Inject } from '@nestjs/common';
 
 @Controller('/courier')
 export class CourierLocationController {
-  constructor(private readonly service: LocationService) { }
+  constructor(
+    private readonly service: LocationService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) { }
 
   @Post('/save-courier-location')
   async saveLocation(@Res() res, @Body() location: CourierLocation) {
     try {
-
       const newLocation = await this.service.saveLocation(location);
 
       return res.status(HttpStatus.CREATED).json({
         message: 'Inserted new courier location.',
         data: newLocation,
       });
-
     } catch (err) {
-
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         message: `Could not insert courier data for ID: ${location.courierId}`,
       });
-
     }
   }
 
@@ -44,7 +37,20 @@ export class CourierLocationController {
   })
   async getLastLocation(@Res() res, @Param('courierId') id) {
     try {
+      const cachedData = await this.cacheManager.get(id);
+
+      if (cachedData) {
+        console.log('ye', cachedData);
+        return res.status(HttpStatus.OK).json({
+          location: cachedData,
+        });
+      } else {
+        console.log('na');
+      }
+
       const location = await this.service.getLastLocation(id);
+
+      await this.cacheManager.set(id, location);
 
       return res.status(HttpStatus.OK).json({
         location,
@@ -59,6 +65,18 @@ export class CourierLocationController {
   @Get('/get-all-couriers-last-location')
   async getAllLastLocations(@Res() res) {
     try {
+      const cachedData = await this.cacheManager.get('all_locations');
+
+      if (cachedData) {
+        console.log('ye', cachedData);
+
+        return res.status(HttpStatus.OK).json({
+          locations: cachedData,
+        });
+      } else {
+        console.log('na');
+      }
+
       const locations = await this.service.getAllLastLocations();
 
       if (!locations.length) {
@@ -66,6 +84,8 @@ export class CourierLocationController {
           message: 'No data to display',
         });
       }
+
+      await this.cacheManager.set('all_locations', locations);
 
       return res.status(HttpStatus.OK).json({
         locations,
