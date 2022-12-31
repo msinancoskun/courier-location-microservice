@@ -15,14 +15,14 @@ export class CourierLocationController {
   ) { }
 
   @Post('/save-courier-location')
-  async saveLocation(@Res() res, @Body() location: CourierLocation) { 
+  async saveLocation(@Res() res, @Body() location: CourierLocation) {
     try {
 
       await this.producerService.produce({
-        topic: 'save-courier-location',
+        topic: 'courier-location-microservice',
         messages: [
           {
-            value: 'courier location is saved'
+            value: '/save-courier-location'
           }
         ]
       });
@@ -49,6 +49,16 @@ export class CourierLocationController {
   })
   async getLastLocation(@Res() res, @Param('courierId') id) {
     try {
+
+      await this.producerService.produce({
+        topic: 'courier-location-microservice',
+        messages: [
+          {
+            value: '/get-courier-last-location'
+          }
+        ]
+      });
+
       const cachedData = await this.cacheManager.get(id);
 
       if (cachedData) {
@@ -62,7 +72,7 @@ export class CourierLocationController {
 
       const location = await this.service.getLastLocation(id);
 
-      await this.cacheManager.set(id, location);
+      await this.cacheManager.set(id, location, 1000);
 
       return res.status(HttpStatus.OK).json({
         location,
@@ -78,15 +88,24 @@ export class CourierLocationController {
   async getAllLastLocations(@Res() res) {
     try {
       const cachedData = await this.cacheManager.get('all_locations');
-      console.log("girdi");
+
+      await this.producerService.produce({
+        topic: 'courier-location-microservice',
+        messages: [
+          {
+            value: '/getAllCouriersLastLocation'
+          }
+        ]
+      });
+
       if (cachedData) {
-        console.log('ye', cachedData);
+        console.log('Data found in cache.', cachedData);
 
         return res.status(HttpStatus.OK).json({
           locations: cachedData,
         });
       } else {
-        console.log('na');
+        console.log('Data could not be found in cache.');
       }
 
       const locations = await this.service.getAllLastLocations();
@@ -97,7 +116,7 @@ export class CourierLocationController {
         });
       }
 
-      await this.cacheManager.set('all_locations', locations);
+      await this.cacheManager.set('all_locations', locations, 1000);
 
       return res.status(HttpStatus.OK).json({
         locations,
