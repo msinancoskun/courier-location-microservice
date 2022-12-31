@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { CourierLocationModule } from './courierLocation.module';
+import { CourierLocationModule } from './CourierLocation.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
@@ -10,6 +10,7 @@ async function bootstrap() {
     .setDescription(
       'Retrieve last locations of specific/all couriers and insert new courier locations.',
     )
+    .setLicense('courier-location', 'localhost:3000')
     .setVersion('1.0')
     .addTag('default')
     .build();

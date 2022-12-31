@@ -1,4 +1,4 @@
-import { CacheModule, Module } from '@nestjs/common';
+import { CacheModule, MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CourierLocationController } from './CourierLocation.controller';
 import * as redisStore from 'cache-manager-redis-store';
@@ -10,6 +10,8 @@ import {
   CourierLocationSchema,
 } from './CourierLocation.schema';
 import { KafkaModule } from './kafka/kafka.module';
+import { TestConsumer } from './test.consumer';
+import { LoggerMiddleware } from './Middlewares/logger.middleware';
 
 @Module({
   imports: [
@@ -21,11 +23,18 @@ import { KafkaModule } from './kafka/kafka.module';
     CacheModule.register<RedisClientOptions>({
       isGlobal: true,
       store: String(redisStore),
-      url: process.env.REDIS_URI,
+      url: process.env.REDIS_URI
     }),
-    KafkaModule    
+    KafkaModule
   ],
   controllers: [CourierLocationController],
-  providers: [LocationService],
+  providers: [LocationService, TestConsumer],
 })
-export class CourierLocationModule { }
+
+export class CourierLocationModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes("*");
+  }
+}

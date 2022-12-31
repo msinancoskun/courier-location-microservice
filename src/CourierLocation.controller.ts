@@ -4,17 +4,29 @@ import { CourierLocation } from './CourierLocation.schema';
 import { LocationService } from './CourierLocation.service';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER, Inject } from '@nestjs/common';
+import { ProducerService } from './kafka/producer.service';
 
 @Controller('/courier')
 export class CourierLocationController {
   constructor(
     private readonly service: LocationService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly producerService: ProducerService
   ) { }
 
   @Post('/save-courier-location')
-  async saveLocation(@Res() res, @Body() location: CourierLocation) {
+  async saveLocation(@Res() res, @Body() location: CourierLocation) { 
     try {
+
+      await this.producerService.produce({
+        topic: 'save-courier-location',
+        messages: [
+          {
+            value: 'courier location is saved'
+          }
+        ]
+      });
+
       const newLocation = await this.service.saveLocation(location);
 
       return res.status(HttpStatus.CREATED).json({
@@ -66,7 +78,7 @@ export class CourierLocationController {
   async getAllLastLocations(@Res() res) {
     try {
       const cachedData = await this.cacheManager.get('all_locations');
-
+      console.log("girdi");
       if (cachedData) {
         console.log('ye', cachedData);
 
