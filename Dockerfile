@@ -1,17 +1,13 @@
-# Docker image.
-FROM node:18.12-alpine
+FROM node:18-bullseye
 
-# Which user.
 USER root
 
-# Create app directory
 WORKDIR /root/app
 
-# Copy app directory.
-COPY package*.json ./
+COPY . .
 
-# Node package install.
-RUN npm install
+RUN npm ci
 
-# Run.
-CMD ["npm", "start"]
+RUN npm run build
+
+CMD [ "node", "dist/main.js" ]

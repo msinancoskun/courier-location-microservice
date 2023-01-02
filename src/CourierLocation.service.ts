@@ -11,7 +11,22 @@ export class LocationService {
   ) { }
 
   async saveLocation(location: CourierLocation): Promise<CourierLocation> {
+
+
     const newLocation = new this.model(location);
+
+    const lastItemFind = await this.model.find({});
+
+    let counter;
+
+    if (lastItemFind.length != 0) {
+      counter = (lastItemFind[lastItemFind.length - 1]?.counter || 0) + 1;
+    } else {
+      counter = 1;
+    };
+
+    newLocation.counter = counter;
+
     return await newLocation.save();
   }
 

@@ -10,6 +10,10 @@ export class CourierLocation {
   courierId: string;
 
   @Prop({ required: true })
+  @ApiProperty({ required: true, default: '1' })
+  counter: number;
+
+  @Prop({ required: true })
   @ApiProperty({ required: true, default: '41 24.2028' })
   latitude: string;
 
