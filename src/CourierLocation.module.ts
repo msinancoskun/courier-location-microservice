@@ -4,11 +4,9 @@ import { CourierLocationController } from './CourierLocation.controller';
 import * as redisStore from 'cache-manager-redis-store';
 import type { RedisClientOptions } from 'redis';
 import { MongooseModule } from '@nestjs/mongoose';
-import { LocationService } from './CourierLocation.service';
+import { CourierLocationService } from './CourierLocation.service';
 import { CourierLocation, CourierLocationSchema } from './CourierLocation.schema';
-import { KafkaModule } from './kafka/kafka.module';
 import { LoggerMiddleware } from './Middlewares/logger.middleware';
-import { ConsumerController } from './kafka/consumer-worker.service';
 
 @Module({
   imports: [
@@ -22,10 +20,10 @@ import { ConsumerController } from './kafka/consumer-worker.service';
       store: String(redisStore),
       url: process.env.REDIS_URI
     }),
-    KafkaModule
+  
   ],
   controllers: [CourierLocationController],
-  providers: [LocationService, ConsumerController],
+  providers: [CourierLocationService],
 })
 
 export class CourierLocationModule {

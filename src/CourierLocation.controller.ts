@@ -1,37 +1,55 @@
-import { Body, Controller, Get, HttpStatus, Param, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, OnModuleInit, Param, Post, Res } from '@nestjs/common';
 import { ApiParam } from '@nestjs/swagger';
 import { CourierLocation } from './CourierLocation.schema';
-import { LocationService } from './CourierLocation.service';
+import { CourierLocationService } from './CourierLocation.service';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER, Inject } from '@nestjs/common';
-import { ProducerService } from './kafka/producer.service';
+import * as amqp from "amqplib"
 
 @Controller('/courier')
-export class CourierLocationController {
+export class CourierLocationController implements OnModuleInit {
+  channel;
   constructor(
-    private readonly service: LocationService,
+    private readonly service: CourierLocationService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private readonly producerService: ProducerService
   ) { }
 
+  async onModuleInit() {
+
+    const connection = await amqp.connect(process.env.AMQP_URL);
+    this.channel = await connection.createChannel();
+    this.channel.prefetch(1);
+    this.channel.assertQueue("MIXED");
+    this.channel.consume("MIXED", async (message) => {
+      const location = JSON.parse(message.content.toString());
+      if (location) {
+        await this.service.saveLocation(location);
+        console.log(message.content.toString());
+      }
+      this.channel.ack(message);
+    });
+  }
+
   @Post('/save-courier-location')
-  async saveLocation(@Res() res, @Body() location: CourierLocation) {
+  async saveLocation(@Res() res, @Body() location: CourierLocation): Promise<any> {
     try {
 
-      await this.producerService.produce({
-        topic: 'courier-location',
-        messages: [
-          {
-            value: JSON.stringify(location)
-          }
-        ],
-        acks: 1
-      });
+      const dataControl = await this.service.getLastLocation(Number(location.courierId));
 
-      return res.status(HttpStatus.CREATED);
-    } catch (err) {
+      if (dataControl) throw new Error("Bummm");
+
+      const channel = this.channel;
+
+      await channel.assertQueue("COURIER-LOCATION");
+
+      await channel.sendToQueue("COURIER-LOCATION", Buffer.from(JSON.stringify(location)));
+
+      return res.sendStatus(HttpStatus.CREATED);
+
+    } catch (error) {
+
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        message: `Could not insert courier data for ID: ${location.courierId}`,
+        result: "Location could not be saved."
       });
     }
   }

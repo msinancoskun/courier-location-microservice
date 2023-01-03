@@ -4,29 +4,30 @@ import { CourierLocation, CourierLocationDocument } from './CourierLocation.sche
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class LocationService {
+export class CourierLocationService {
   constructor(
     @InjectModel(CourierLocation.name)
     private model: Model<CourierLocationDocument>,
   ) { }
 
-  async saveLocation(location: CourierLocation): Promise<CourierLocation> {
+  async saveLocation(location: CourierLocation) {
 
-    const newLocation = new this.model(location);
+    try {
 
-    const lastItemFind = await this.model.find({});
+      const lastItemFind = await this.model.find({});
 
-    let counter;
+      let counter;
 
-    if (lastItemFind.length != 0) {
-      counter = (lastItemFind[lastItemFind.length - 1]?.counter || 0) + 1;
-    } else {
-      counter = 1;
-    };
+      if (lastItemFind.length != 0) {
+        counter = (lastItemFind[lastItemFind.length - 1]?.counter || 0) + 1;
+      } else {
+        counter = 1;
+      };
 
-    newLocation.counter = counter;
-
-    return await newLocation.save();
+      await this.model.create({ ...location, counter });
+    } catch (error) {
+      error;
+    }
   }
 
   async getLastLocation(
