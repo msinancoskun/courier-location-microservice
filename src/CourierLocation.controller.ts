@@ -19,20 +19,16 @@ export class CourierLocationController {
     try {
 
       await this.producerService.produce({
-        topic: 'courier-location-microservice',
+        topic: 'courier-location',
         messages: [
           {
-            value: '/save-courier-location'
+            value: JSON.stringify(location)
           }
-        ]
+        ],
+        acks: 1
       });
 
-      const newLocation = await this.service.saveLocation(location);
-
-      return res.status(HttpStatus.CREATED).json({
-        message: 'Inserted new courier location.',
-        data: newLocation,
-      });
+      return res.status(HttpStatus.CREATED);
     } catch (err) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         message: `Could not insert courier data for ID: ${location.courierId}`,
@@ -49,15 +45,6 @@ export class CourierLocationController {
   })
   async getLastLocation(@Res() res, @Param('courierId') id) {
     try {
-
-      await this.producerService.produce({
-        topic: 'courier-location-microservice',
-        messages: [
-          {
-            value: '/get-courier-last-location'
-          }
-        ]
-      });
 
       const cachedData = await this.cacheManager.get(id);
 
@@ -88,15 +75,6 @@ export class CourierLocationController {
   async getAllLastLocations(@Res() res) {
     try {
       const cachedData = await this.cacheManager.get('all_locations');
-
-      await this.producerService.produce({
-        topic: 'courier-location-microservice',
-        messages: [
-          {
-            value: '/getAllCouriersLastLocation'
-          }
-        ]
-      });
 
       if (cachedData) {
         console.log('Data found in cache.', cachedData);

@@ -18,7 +18,7 @@ export class ProducerService implements OnModuleInit, OnApplicationShutdown {
     await this.producer.send(record);
   }
 
-  async onApplicationShutdown(signal?: string) {
+  async onApplicationShutdown() {
     await this.producer.disconnect();
   }
 }

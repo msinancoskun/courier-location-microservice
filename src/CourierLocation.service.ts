@@ -12,7 +12,6 @@ export class LocationService {
 
   async saveLocation(location: CourierLocation): Promise<CourierLocation> {
 
-
     const newLocation = new this.model(location);
 
     const lastItemFind = await this.model.find({});

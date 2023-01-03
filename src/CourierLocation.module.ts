@@ -8,7 +8,7 @@ import { LocationService } from './CourierLocation.service';
 import { CourierLocation, CourierLocationSchema } from './CourierLocation.schema';
 import { KafkaModule } from './kafka/kafka.module';
 import { LoggerMiddleware } from './Middlewares/logger.middleware';
-import { ConsumerController } from './kafka/consumer.controller';
+import { ConsumerController } from './kafka/consumer-worker.service';
 
 @Module({
   imports: [

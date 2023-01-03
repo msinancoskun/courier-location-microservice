@@ -11,8 +11,7 @@ export class ConsumerService implements OnApplicationShutdown {
   private readonly consumers: Consumer[] = [];
 
   async consume(topic: ConsumerSubscribeTopic, config: ConsumerRunConfig) {
-
-    const consumer = this.kafka.consumer({ groupId: 'courier-location-microservice' });
+    const consumer = this.kafka.consumer({ groupId: 'courier' });
     await consumer.connect();
     await consumer.subscribe(topic);
     await consumer.run(config);
@@ -20,7 +19,7 @@ export class ConsumerService implements OnApplicationShutdown {
     this.consumers.push(consumer);
   }
 
-  async onApplicationShutdown(signal?: string) {
+  async onApplicationShutdown() {
     for (const consumer of this.consumers) {
       await consumer.disconnect();
     }
