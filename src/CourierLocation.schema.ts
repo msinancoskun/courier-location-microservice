@@ -11,7 +11,7 @@ export class CourierLocation {
 
   @Prop({ required: true })
   @ApiProperty({ required: true, default: '1' })
-  counter: number;
+  queueOrder: number;
 
   @Prop({ required: true })
   @ApiProperty({ required: true, default: '41 24.2028' })

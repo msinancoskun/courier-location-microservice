@@ -13,18 +13,18 @@ export class CourierLocationService {
   async saveLocation(location: CourierLocation) {
 
     try {
-
       const lastItemFind = await this.model.find({});
 
-      let counter;
+      // ? Queue order is added to schema to show queue order is not breaking, and working correctly.
+      let queueOrder: number;
 
       if (lastItemFind.length != 0) {
-        counter = (lastItemFind[lastItemFind.length - 1]?.counter || 0) + 1;
+        queueOrder = (lastItemFind[lastItemFind.length - 1]?.queueOrder || 0) + 1;
       } else {
-        counter = 1;
+        queueOrder = 1;
       };
 
-      await this.model.create({ ...location, counter });
+      await this.model.create({ ...location, queueOrder });
     } catch (error) {
       error;
     }

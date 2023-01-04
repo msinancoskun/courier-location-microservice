@@ -4,7 +4,7 @@
   "description": "",
   "author": "",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT license",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -24,7 +24,6 @@
     "axios": "^1.2.2",
     "cache-manager": "^5.1.4",
     "cache-manager-redis-store": "^3.0.1",
-    "kafkajs": "^2.2.3",
     "mongoose": "^6.8.2",
     "redis": "^4.5.1",
     "reflect-metadata": "^0.1.13",

@@ -8,7 +8,8 @@ import * as amqp from "amqplib"
 
 @Controller('/courier')
 export class CourierLocationController implements OnModuleInit {
-  channel;
+  private channel: amqp.Channel;
+
   constructor(
     private readonly service: CourierLocationService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -19,8 +20,8 @@ export class CourierLocationController implements OnModuleInit {
     const connection = await amqp.connect(process.env.AMQP_URL);
     this.channel = await connection.createChannel();
     this.channel.prefetch(1);
-    this.channel.assertQueue("MIXED");
-    this.channel.consume("MIXED", async (message) => {
+    this.channel.assertQueue("COURIER-LOCATION");
+    this.channel.consume("COURIER-LOCATION", async (message) => {
       const location = JSON.parse(message.content.toString());
       if (location) {
         await this.service.saveLocation(location);
@@ -42,14 +43,16 @@ export class CourierLocationController implements OnModuleInit {
 
       await channel.assertQueue("COURIER-LOCATION");
 
-      await channel.sendToQueue("COURIER-LOCATION", Buffer.from(JSON.stringify(location)));
+      channel.sendToQueue("COURIER-LOCATION", Buffer.from(JSON.stringify(location)));
 
-      return res.sendStatus(HttpStatus.CREATED);
+      return res.status(HttpStatus.CREATED).json({
+        message: 'Inserted new courier location.',
+        data: location,
+      });
 
     } catch (error) {
-
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        result: "Location could not be saved."
+        message: `Could not insert courier data for ID: ${location.courierId}`,
       });
     }
   }
@@ -63,21 +66,17 @@ export class CourierLocationController implements OnModuleInit {
   })
   async getLastLocation(@Res() res, @Param('courierId') id) {
     try {
-
       const cachedData = await this.cacheManager.get(id);
 
       if (cachedData) {
-        console.log('ye', cachedData);
         return res.status(HttpStatus.OK).json({
           location: cachedData,
         });
-      } else {
-        console.log('na');
       }
 
       const location = await this.service.getLastLocation(id);
 
-      await this.cacheManager.set(id, location, 1000);
+      await this.cacheManager.set(id, location, 3000);
 
       return res.status(HttpStatus.OK).json({
         location,
@@ -95,13 +94,9 @@ export class CourierLocationController implements OnModuleInit {
       const cachedData = await this.cacheManager.get('all_locations');
 
       if (cachedData) {
-        console.log('Data found in cache.', cachedData);
-
         return res.status(HttpStatus.OK).json({
           locations: cachedData,
         });
-      } else {
-        console.log('Data could not be found in cache.');
       }
 
       const locations = await this.service.getAllLastLocations();
@@ -112,7 +107,7 @@ export class CourierLocationController implements OnModuleInit {
         });
       }
 
-      await this.cacheManager.set('all_locations', locations, 1000);
+      await this.cacheManager.set('all_locations', locations, 3000);
 
       return res.status(HttpStatus.OK).json({
         locations,
