@@ -36,14 +36,14 @@ export class CourierLocationController implements OnModuleInit {
     try {
 
       const dataControl = await this.service.getLastLocation(Number(location.courierId));
-
-      if (dataControl) throw new Error("Bummm");
-
+      
       const channel = this.channel;
-
+      
       await channel.assertQueue("COURIER-LOCATION");
 
       channel.sendToQueue("COURIER-LOCATION", Buffer.from(JSON.stringify(location)));
+
+      if (dataControl) throw new Error("Bummm");
 
       return res.status(HttpStatus.CREATED).json({
         message: 'Inserted new courier location.',
