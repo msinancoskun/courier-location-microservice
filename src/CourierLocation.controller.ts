@@ -94,9 +94,12 @@ export class CourierLocationController implements OnModuleInit {
       const cachedData = await this.cacheManager.get('all_locations');
 
       if (cachedData) {
+        console.log("cached data found. " + cachedData)
         return res.status(HttpStatus.OK).json({
           locations: cachedData,
         });
+      } else {
+        console.log("cached data could not be found.");
       }
 
       const locations = await this.service.getAllLastLocations();
