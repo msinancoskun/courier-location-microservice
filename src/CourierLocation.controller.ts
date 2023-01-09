@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, OnModuleInit, Param, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Res } from '@nestjs/common';
 import { ApiParam } from '@nestjs/swagger';
 import { CourierLocation } from './CourierLocation.schema';
 import { CourierLocationService } from './CourierLocation.service';
@@ -7,7 +7,7 @@ import { CACHE_MANAGER, Inject } from '@nestjs/common';
 import * as amqp from "amqplib"
 
 @Controller('/courier')
-export class CourierLocationController implements OnModuleInit {
+export class CourierLocationController {
   private channel: amqp.Channel;
 
   constructor(
@@ -15,35 +15,21 @@ export class CourierLocationController implements OnModuleInit {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) { }
 
-  async onModuleInit() {
-
-    const connection = await amqp.connect(process.env.AMQP_URL);
-    this.channel = await connection.createChannel();
-    this.channel.prefetch(1);
-    this.channel.assertQueue("COURIER-LOCATION");
-    this.channel.consume("COURIER-LOCATION", async (message) => {
-      const location = JSON.parse(message.content.toString());
-      if (location) {
-        await this.service.saveLocation(location);
-        console.log(message.content.toString());
-      }
-      this.channel.ack(message);
-    });
-  }
-
   @Post('/save-courier-location')
   async saveLocation(@Res() res, @Body() location: CourierLocation): Promise<any> {
     try {
 
       const dataControl = await this.service.getLastLocation(Number(location.courierId));
-      
+
       const channel = this.channel;
-      
+
       await channel.assertQueue("COURIER-LOCATION");
 
       channel.sendToQueue("COURIER-LOCATION", Buffer.from(JSON.stringify(location)));
 
       if (dataControl) throw new Error("Bummm");
+
+      this.cacheManager.reset();
 
       return res.status(HttpStatus.CREATED).json({
         message: 'Inserted new courier location.',
